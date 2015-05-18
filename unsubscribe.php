@@ -83,16 +83,24 @@ class WeDevs_BBP_Bulk_Unsubscribe {
         return $instance;
     }
 
-
     /**
      * Initialize plugin for localization
      *
      * @uses load_plugin_textdomain()
      */
     public function localization_setup() {
-        load_plugin_textdomain( 'baseplugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+        load_plugin_textdomain( 'bbp-unsubscribe', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
     }
 
+    /**
+     * Do the unsubscribe form handling
+     *
+     * We might have thousands of subscriptions in the forum, so
+     * unsubscribing from every topic at once is not a good thing.
+     * Thats why we are doing a small amount of task in a request.
+     *
+     * @return [type] [description]
+     */
     public function unsubsribe_ajax() {
         if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'bbp_bulk_unsubscribe' ) ) {
             wp_send_json_error();
@@ -121,6 +129,11 @@ class WeDevs_BBP_Bulk_Unsubscribe {
         ) );
     }
 
+    /**
+     * Show the unsubscribe form to the user/moderator
+     *
+     * @return void
+     */
     public function unsubscribe_form() {
         $user_id = bbp_get_displayed_user_id();
 
@@ -128,16 +141,17 @@ class WeDevs_BBP_Bulk_Unsubscribe {
 
             $subscriptions = bbp_get_user_subscribed_topic_ids( $user_id );
             $count         = count( $subscriptions );
-
-            if ( ! $count ) {
-                return;
-            }
-
-
             ?>
 
             <h2><?php _e( 'Manage Subscription', 'bbp-unsubscribe' ); ?></h2>
-            <p><?php printf( __( 'You are currently subscribed to %d %s.', 'bbp-unsubscribe' ), $count, _n( 'topic', 'topics', $count, 'bbp-unsubscribe' ) ); ?></p>
+
+            <?php if ( $count ) { ?>
+                <p><?php printf( __( 'You are currently subscribed to %d %s.', 'bbp-unsubscribe' ), $count, _n( 'topic', 'topics', $count, 'bbp-unsubscribe' ) ); ?></p>
+            <?php } else { ?>
+                <p><?php _e( 'You are not subscribed to any topic.', $domain ); ?></p>
+                <?php
+                return;
+            } ?>
 
             <div id="bbp-bulk-unsusbribe-response"></div>
             <form id="bbp-bulk-unsubscribe" action="" method="post" accept-charset="utf-8">
@@ -209,4 +223,4 @@ class WeDevs_BBP_Bulk_Unsubscribe {
 
 } // WeDevs_BBP_Bulk_Unsubscribe
 
-$baseplugin = WeDevs_BBP_Bulk_Unsubscribe::init();
+WeDevs_BBP_Bulk_Unsubscribe::init();
